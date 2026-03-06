@@ -1,36 +1,47 @@
 name: Build VMAXRAY APK
 
-on: 
+on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
       
-      - name: Setup JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
-          
-      - name: Unzip file
+          distribution: 'temurin'
+          cache: gradle
+      
+      - name: List files
+        run: ls -la
+      
+      - name: Unzip project
         run: |
-          ls -la
-          unzip -o vmaxray-android-v319.zip || echo "Zip file not found"
-          
+          if [ -f "vmaxray-android-v319.zip" ]; then
+            unzip -o vmaxray-android-v319.zip -d project
+          else
+            echo "Looking for zip files..."
+            find . -name "*.zip" -type f
+            exit 1
+          fi
+      
       - name: Build APK
+        working-directory: project/vmaxray-android
         run: |
-          cd vmaxray-android
           chmod +x gradlew
           ./gradlew assembleDebug
-          
+      
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: VMAXRAY-APK
-          path: vmaxray-android/app/build/outputs/apk/debug/*.apk
+          name: VMAXRAY-Trader-APK
+          path: project/vmaxray-android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
