@@ -1,15 +1,36 @@
-name: Build VMAXRAY APK        (no indent)
-                                (empty line)
-on:                             (no indent)
-  push:                         (2 spaces)
-    branches: [ main, master ]  (4 spaces)
-  workflow_dispatch:            (2 spaces)
-                                (empty line)
-jobs:                           (no indent)
-  build:                        (2 spaces)
-    runs-on: ubuntu-latest      (4 spaces)
-                                (empty line)
-    steps:                      (4 spaces)
-      - name: Checkout repo     (6 spaces)
-        uses: actions/checkout@v3 (8 spaces)          path: project/vmaxray-android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
+name: Build VMAXRAY APK
+
+on: 
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          
+      - name: Unzip file
+        run: |
+          ls -la
+          unzip -o vmaxray-android-v319.zip || echo "Zip file not found"
+          
+      - name: Build APK
+        run: |
+          cd vmaxray-android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VMAXRAY-APK
+          path: vmaxray-android/app/build/outputs/apk/debug/*.apk
