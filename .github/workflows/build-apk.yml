@@ -1,1 +1,38 @@
 
+name: Build VMAXRAY APK
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Unzip Android project
+        run: unzip vmaxray-android-v319.zip -d project
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Make gradlew executable
+        working-directory: project/vmaxray-android
+        run: |
+          if [ ! -f gradlew ]; then gradle wrapper --gradle-version=8.0; fi
+          chmod +x gradlew
+      - name: Build Debug APK
+        working-directory: project/vmaxray-android
+        run: ./gradlew assembleDebug --stacktrace
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: VMAXRAY-DNA-Trader-v319
+          path: project/vmaxray-android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
